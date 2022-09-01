@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.3.7
+// @version      1.3.8
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -22,11 +22,15 @@
 //
 //
 // @include      *://*voe*
-// @include      *://v-o-e-unblock*
-// @include      *://audaciousdefaulthouse*
+// @include      *://*voe-network*
+// @include      *://v-o-e-unblock.com*
+// @include      *://audaciousdefaulthouse.com*
 // @include      *://launchreliantcleaverriver*
 // @include      *://reputationsheriffkennethsand*
 // @include      *://fittingcentermondaysunday*
+// @include      *://housecardsummerbutton*
+// @include      *://fraudclatterflyingcar*
+// @include      *://bigclatterhomesguideservice*
 //
 // @include      *streamtape.*/get_video?*
 // @include      *streamtape.*/e/*
@@ -569,11 +573,15 @@ async function getVideoSrc() {
   //VOE
   if (
     document.location.hostname.includes("voe.") ||
-    document.location.hostname.includes("v-o-e-unblock") ||
-    document.location.hostname.includes("audaciousdefaulthouse") ||
+    document.location.hostname.includes("v-o-e-unblock.") ||
+    document.location.hostname.includes("voe-network") ||
+    document.location.hostname.includes("audaciousdefaulthouse.") ||
     document.location.hostname.includes("launchreliantcleaverriver") ||
     document.location.hostname.includes("reputationsheriffkennethsand") ||
-    document.location.hostname.includes("fittingcentermondaysunday")
+    document.location.hostname.includes("fittingcentermondaysunday") ||
+    document.location.hostname.includes("housecardsummerbutton") ||
+    document.location.hostname.includes("fraudclatterflyingcar") ||
+    document.location.hostname.includes("bigclatterhomesguideservice")
   ) {
     retry = true;
 
