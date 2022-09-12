@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.3.8
+// @version      1.3.9
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -29,8 +29,9 @@
 // @include      *://reputationsheriffkennethsand*
 // @include      *://fittingcentermondaysunday*
 // @include      *://housecardsummerbutton*
-// @include      *://fraudclatterflyingcar*
+// @include      *://fraudclatterflying*
 // @include      *://bigclatterhomesguideservice*
+// @include      *://uptodatefinishconferenceroom*
 //
 // @include      *streamtape.*/get_video?*
 // @include      *streamtape.*/e/*
@@ -252,7 +253,10 @@ var next_video_url, season_number, episode_number, episode_id, episode_name;
 
 var loaded = false;
 async function main() {
+  console.log("loaded: " + loaded);
   if (loaded) return;
+  console.log(document.location.href);
+  console.log("getRRId: " + (await getRRId(document.location.href)));
   if (!(await getRRId(document.location.href))) return;
   console.log("");
   configInstanceId = getConfigInstanceId();
@@ -569,7 +573,6 @@ async function getVideoSrc() {
   var videoNode = null;
 
   var retry = false;
-
   //VOE
   if (
     document.location.hostname.includes("voe.") ||
@@ -580,8 +583,9 @@ async function getVideoSrc() {
     document.location.hostname.includes("reputationsheriffkennethsand") ||
     document.location.hostname.includes("fittingcentermondaysunday") ||
     document.location.hostname.includes("housecardsummerbutton") ||
-    document.location.hostname.includes("fraudclatterflyingcar") ||
-    document.location.hostname.includes("bigclatterhomesguideservice")
+    document.location.hostname.includes("fraudclatterflying") ||
+    document.location.hostname.includes("bigclatterhomesguideservice") ||
+    document.location.hostname.includes("uptodatefinishconferenceroom")
   ) {
     retry = true;
 
