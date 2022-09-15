@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.3.9
+// @version      1.4.0
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -32,6 +32,9 @@
 // @include      *://fraudclatterflying*
 // @include      *://bigclatterhomesguideservice*
 // @include      *://uptodatefinishconferenceroom*
+// @include      *://grandsonreverendlawn*
+// @include      *://glizauvo*
+// @include      *://realfinanceblogcenter*
 //
 // @include      *streamtape.*/get_video?*
 // @include      *streamtape.*/e/*
@@ -585,7 +588,10 @@ async function getVideoSrc() {
     document.location.hostname.includes("housecardsummerbutton") ||
     document.location.hostname.includes("fraudclatterflying") ||
     document.location.hostname.includes("bigclatterhomesguideservice") ||
-    document.location.hostname.includes("uptodatefinishconferenceroom")
+    document.location.hostname.includes("uptodatefinishconferenceroom") ||
+    document.location.hostname.includes("grandsonreverendlawn") ||
+    document.location.hostname.includes("glizauvo") ||
+    document.location.hostname.includes("realfinanceblogcenter")
   ) {
     retry = true;
 
