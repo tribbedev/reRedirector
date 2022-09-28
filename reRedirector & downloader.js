@@ -35,6 +35,7 @@
 // @include      *://grandsonreverendlawn*
 // @include      *://glizauvo*
 // @include      *://realfinanceblogcenter*
+// @include      *://tinycat-voe-fashion*
 //
 // @include      *streamtape.*/get_video?*
 // @include      *streamtape.*/e/*
@@ -62,7 +63,7 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-var devMode = true;
+https: var devMode = true;
 
 //reRedirector Session ID
 var rRId = null;
@@ -591,7 +592,8 @@ async function getVideoSrc() {
     document.location.hostname.includes("uptodatefinishconferenceroom") ||
     document.location.hostname.includes("grandsonreverendlawn") ||
     document.location.hostname.includes("glizauvo") ||
-    document.location.hostname.includes("realfinanceblogcenter")
+    document.location.hostname.includes("realfinanceblogcenter") ||
+    document.location.hostname.includes("tinycat-voe-fashion")
   ) {
     retry = true;
 
