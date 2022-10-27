@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.1
+// @version      1.4.2
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -314,43 +314,48 @@ async function main() {
 //#region Methods
 //#region webbased Methods
 async function videoHosterSource(videoNode) {
-  var autoplay =
-    !GM_config.get("downloadVideo") &&
-    isIframe() &&
-    GM_config.get("autoRedirectNextPage");
+  if (!String(videoNode.source).includes("do_not_delete")) {
+    var autoplay =
+      !GM_config.get("downloadVideo") &&
+      isIframe() &&
+      GM_config.get("autoRedirectNextPage");
 
-  if (autoplay) {
-    videoNode.parentNode.autoplay = "autoplay";
-  } else videoNode.parentNode.autoplay = false;
+    if (autoplay) {
+      videoNode.parentNode.autoplay = "autoplay";
+    } else videoNode.parentNode.autoplay = false;
 
-  if (GM_config.get("downloadVideo")) {
-    var episode_name = null;
-    if (!GM_config.get("disableNameing"))
-      episode_name = await getGM("episode_name");
-    if (episode_name == null) episode_name = Date.now();
-    //#region Download
-    var link = document.createElement("a");
-    link.download = episode_name + ".mp4";
-    link.href = videoNode.source;
-    link.click();
-    await sleep(1000);
-    //#endregion
-  }
-
-  await deleteAllGM(true);
-
-  if (
-    (GM_config.get("autoRedirectNextPage") ||
-      GM_config.get("setEpisodeAsWatched")) &&
-    isIframe()
-  ) {
-    if (GM_config.get("downloadVideo"))
-      window.top.postMessage("finishedVideo", "*");
-    else {
-      videoNode.parentNode.addEventListener("ended", async function () {
-        window.top.postMessage("finishedVideo", "*");
-      });
+    if (GM_config.get("downloadVideo")) {
+      var episode_name = null;
+      if (!GM_config.get("disableNameing"))
+        episode_name = await getGM("episode_name");
+      if (episode_name == null) episode_name = Date.now();
+      //#region Download
+      var link = document.createElement("a");
+      link.download = episode_name + ".mp4";
+      link.href = videoNode.source;
+      link.click();
+      await sleep(1000);
+      //#endregion
     }
+
+    await deleteAllGM(true);
+
+    if (
+      (GM_config.get("autoRedirectNextPage") ||
+        GM_config.get("setEpisodeAsWatched")) &&
+      isIframe()
+    ) {
+      if (GM_config.get("downloadVideo"))
+        window.top.postMessage("finishedVideo", "*");
+      else {
+        videoNode.parentNode.addEventListener("ended", async function () {
+          window.top.postMessage("finishedVideo", "*");
+        });
+      }
+    }
+  } else {
+    // todo, do here a relaod from old website
+    // streamtape bypass
   }
 }
 
