@@ -294,6 +294,7 @@ async function main() {
   if (checkIsVideoNode != null && checkIsVideoNode.length == 1) {
     await videoHosterSource(checkIsVideoNode[0]);
   } else {
+    selectFavoriteStream();
     await getEpisodeDetails();
     if (season_number) console.log("season_number: " + season_number);
     if (episode_number) console.log("episode_number: " + episode_number);
@@ -306,7 +307,6 @@ async function main() {
       console.log("video_src: " + video_src);
       window.location.href = video_src;
     } else if (!isIframe()) {
-      selectFavoriteStream();
       //#region ConfigButton
       var gmConfigButton = document.createElement("img");
       gmConfigButton.src =
@@ -804,32 +804,28 @@ async function deleteGM(variable_name) {
   await GM_deleteValue("republic_" + rRId + "_" + variable_name);
 }
 
-async function deleteAllGM(session = false) {
+async function deleteAllGM(session = false, _rRId = null) {
+  _rRId = _rRId == null ? rRId : _rRId;
   let gmRPKeys = await GM_listValues();
   for (let key of gmRPKeys) {
-    if (key.includes("republic_") && (session == false || key.includes(rRId))) {
+    if (
+      key.includes("republic_") &&
+      (session == false || key.includes(_rRId))
+    ) {
       debug("deleteAllGM: " + key);
       await GM_deleteValue(key);
     }
   }
 }
 
-async function deleteOldGM() {
-  let gmRPKeys = await GM_listValues();
-  const timeNow = Math.round(Date.now());
-  for (let key of gmRPKeys) {
-    if (key.includes("republic_")) {
-      const timestamp = Number(key.split("_")[1]);
-      console.log(timeNow);
-      console.log(timestamp);
-      console.log(timeNow - timestamp);
-      console.log(Math.round((timeNow - timestamp) / 1000));
-      if (timeNow - timestamp >= 3600000) {
-        debug("deleteOldGM: " + key);
-        await GM_deleteValue(key);
-      }
+async function checkrRId(_rRId) {
+  if (_rRId)
+    if (Date.now() - _rRId >= 3600000) {
+      debug("delete rRId: " + _rRId);
+      await deleteAllGM(true, _rRId);
+      sessionStorage.removeItem("republic_sess");
+      rRId = null;
     }
-  }
 }
 //#endregion
 
@@ -839,27 +835,28 @@ async function getRRId(_url) {
     if (!isIframe()) {
       //check sessionstorage
       rRId = sessionStorage.getItem("republic_sess");
+      checkrRId(rRId);
       //check GM
       let gmRPKeys = await GM_listValues();
-      debug(gmRPKeys);
       for (let key of gmRPKeys) {
         if (key.includes("republic_") && key.includes("_sess")) {
-          var _id = key.replace("republic_", "").replace("_sess", "");
+          var _id = Number(key.split("_")[1]);
+          checkrRId(_id);
           if (rRId == null || _id == rRId) {
             var value = GM_getValue(key);
             if (isString(value) && value.includes(_url)) {
-              rRId = key.replace("republic_", "").replace("_sess", "");
+              rRId = _id;
               rRId_Value = value;
             }
           }
         }
       }
       if (rRId == null) {
-        rRId = Math.round(Date.now());
+        rRId = Date.now();
         rRId_Value = _url;
 
         await setGM("sess", rRId_Value);
-        await sessionStorage.setItem("republic_sess", rRId);
+        sessionStorage.setItem("republic_sess", rRId);
       }
     } else {
       var count = 0;
@@ -870,6 +867,7 @@ async function getRRId(_url) {
       }
     }
   }
+  rRId = rRId != null ? rRId : getRRId(_url);
   return rRId;
 }
 
