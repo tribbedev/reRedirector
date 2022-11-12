@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.2
+// @version      1.4.3
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -31,7 +31,7 @@
 // @include      *://housecardsummerbutton*
 // @include      *://fraudclatterflying*
 // @include      *://bigclatterhomesguideservice*
-// @include      *://uptodatefinishconferenceroom*
+// @include      *://uptoperformancefinishconferenceroom*
 // @include      *://grandsonreverendlawn*
 // @include      *://glizauvo*
 // @include      *://realfinanceblogcenter*
@@ -63,7 +63,7 @@
 // @grant        GM_addStyle
 // ==/UserScript==
 
-https: var devMode = true;
+var devMode = true;
 
 //reRedirector Session ID
 var rRId = null;
@@ -191,9 +191,21 @@ function GMConfig_data() {
             type: "checkbox",
             default: true,
           },
+          defaultLanguage: {
+            lanel:
+              "Select your favorite language for streams | order= selection -> ger -> ger sub -> eng",
+            type: "select",
+            options: ["German", "German Sub", "English"],
+            default: "German",
+          },
+          defaultStreamingProvider: {
+            lanel: "Select your favorite streaming provider",
+            type: "select",
+            options: ["VOE", "Streamtape", "Vidoza", "StreamZ"],
+            default: "VOE",
+          },
         },
       };
-      break;
     case 2: //streamkiste
       return {
         ...default_data,
@@ -294,7 +306,8 @@ async function main() {
       console.log("video_src: " + video_src);
       window.location.href = video_src;
     } else if (!isIframe()) {
-      //#setregion ConfigButton
+      selectFavoriteStream();
+      //#region ConfigButton
       var gmConfigButton = document.createElement("img");
       gmConfigButton.src =
         "https://img.icons8.com/plasticine/452/apple-settings--v3.png";
@@ -308,6 +321,7 @@ async function main() {
       await notVideoHoster(episode_name);
     }
   }
+  deleteOldGM();
   loaded = true;
 }
 
@@ -360,7 +374,7 @@ async function videoHosterSource(videoNode) {
 }
 
 async function notVideoHoster() {
-  //#setregion SkipButton
+  //#region SkipButton
   var changeLanguageNode = await waitForFound(
     "div[class='hosterSiteVideo']>div[class='changeLanguage']",
     5,
@@ -490,19 +504,19 @@ async function getEpisodeDetails() {
         "div[class='info-right']>div[class='title']>div[class='release']"
       );
       // #region language
-      var languageNode = document.querySelectorAll(
-        "div[class='stream-out']>div[class='stream-bg']>label>select[id='lang']"
-      );
-      if (languageNode.length == 1) {
-        languageSelection = languageNode[0];
-        for (var i = 0; i < languageSelection.options.length; i++) {
-          if (languageSelection.options[i].text.includes("Deutsch")) {
-            languageSelection.selectedIndex = i;
-            languageSelection.dispatchEvent(new Event("change"));
-            break;
-          }
-        }
-      }
+      // var languageNode = document.querySelectorAll(
+      //   "div[class='stream-out']>div[class='stream-bg']>label>select[id='lang']"
+      // );
+      // if (languageNode.length == 1) {
+      //   languageSelection = languageNode[0];
+      //   for (var i = 0; i < languageSelection.options.length; i++) {
+      //     if (languageSelection.options[i].text.includes("Deutsch")) {
+      //       languageSelection.selectedIndex = i;
+      //       languageSelection.dispatchEvent(new Event("change"));
+      //       break;
+      //     }
+      //   }
+      // }
       // #endregion
       // #region movieQuality
       var movieQualityNode = document.querySelectorAll(
@@ -544,6 +558,34 @@ async function getEpisodeDetails() {
   }
 
   return;
+}
+
+async function selectFavoriteStream() {
+  var favLangNr = GM_config.get("defaultLanguage");
+  favLangNr =
+    favLangNr == "German"
+      ? 1
+      : favLangNr == "English"
+      ? 2
+      : favLangNr == "German Sub"
+      ? 3
+      : 0;
+
+  var streamingUrlNode = Array.from(
+    document.querySelectorAll(
+      "ul[class='row']>li[data-lang-key='" + favLangNr + "']"
+    )
+  ).find((el) =>
+    el.textContent.includes(GM_config.get("defaultStreamingProvider"))
+  );
+  if (streamingUrlNode) {
+    streamingUrlNode = streamingUrlNode.querySelector(
+      "div>a[class='watchEpisode']"
+    );
+    if (streamingUrlNode) {
+      streamingUrlNode.click();
+    }
+  }
 }
 
 async function getNextVideoUrl() {
@@ -594,7 +636,9 @@ async function getVideoSrc() {
     document.location.hostname.includes("housecardsummerbutton") ||
     document.location.hostname.includes("fraudclatterflying") ||
     document.location.hostname.includes("bigclatterhomesguideservice") ||
-    document.location.hostname.includes("uptodatefinishconferenceroom") ||
+    document.location.hostname.includes(
+      "uptoperformancefinishconferenceroom"
+    ) ||
     document.location.hostname.includes("grandsonreverendlawn") ||
     document.location.hostname.includes("glizauvo") ||
     document.location.hostname.includes("realfinanceblogcenter") ||
@@ -764,9 +808,26 @@ async function deleteAllGM(session = false) {
   let gmRPKeys = await GM_listValues();
   for (let key of gmRPKeys) {
     if (key.includes("republic_") && (session == false || key.includes(rRId))) {
-      // add here a timestamp check for older sessions to delete
       debug("deleteAllGM: " + key);
       await GM_deleteValue(key);
+    }
+  }
+}
+
+async function deleteOldGM() {
+  let gmRPKeys = await GM_listValues();
+  const timeNow = Math.round(Date.now());
+  for (let key of gmRPKeys) {
+    if (key.includes("republic_")) {
+      const timestamp = Number(key.split("_")[1]);
+      console.log(timeNow);
+      console.log(timestamp);
+      console.log(timeNow - timestamp);
+      console.log(Math.round((timeNow - timestamp) / 1000));
+      if (timeNow - timestamp >= 3600000) {
+        debug("deleteOldGM: " + key);
+        await GM_deleteValue(key);
+      }
     }
   }
 }
@@ -794,7 +855,7 @@ async function getRRId(_url) {
         }
       }
       if (rRId == null) {
-        rRId = Date.now();
+        rRId = Math.round(Date.now());
         rRId_Value = _url;
 
         await setGM("sess", rRId_Value);
