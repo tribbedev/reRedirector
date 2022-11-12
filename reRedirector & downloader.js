@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.4
+// @version      1.4.5
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -561,6 +561,11 @@ async function getEpisodeDetails() {
 }
 
 async function selectFavoriteStream() {
+  var baseStreamingNode = document.querySelectorAll(
+    "ul[class='row']>li[data-lang-key]"
+  );
+  if (baseStreamingNode.length == 0) return;
+
   var favLangNr = GM_config.get("defaultLanguage");
   favLangNr =
     favLangNr == "German"
@@ -570,14 +575,38 @@ async function selectFavoriteStream() {
       : favLangNr == "German Sub"
       ? 3
       : 0;
+  var favStreamingProvider = GM_config.get("defaultStreamingProvider");
 
-  var streamingUrlNode = Array.from(
-    document.querySelectorAll(
-      "ul[class='row']>li[data-lang-key='" + favLangNr + "']"
-    )
-  ).find((el) =>
-    el.textContent.includes(GM_config.get("defaultStreamingProvider"))
-  );
+  var streamingUrlNode = null;
+  var count = 0;
+  while (streamingUrlNode == null || count >= 13) {
+    count++;
+    var _streamingUrlNode = Array.from(
+      document.querySelectorAll(
+        "ul[class='row']>li[data-lang-key='" + favLangNr + "']"
+      )
+    );
+    if (_streamingUrlNode.length > 0) {
+      _streamingUrlNode = _streamingUrlNode.find((el) =>
+        el.textContent.includes(favStreamingProvider)
+      );
+      if (_streamingUrlNode) {
+        streamingUrlNode = _streamingUrlNode;
+      } else {
+        favStreamingProvider =
+          favStreamingProvider == "VOE"
+            ? "Streamtape"
+            : favStreamingProvider == "Streamtape"
+            ? "Vidoza"
+            : favStreamingProvider == "Vidoza"
+            ? "StreamZ"
+            : "VOE";
+      }
+    } else {
+      favLangNr = favLangNr == 1 ? 3 : favLangNr == 3 ? 2 : 1;
+    }
+  }
+  debug(streamingUrlNode);
   if (streamingUrlNode) {
     streamingUrlNode = streamingUrlNode.querySelector(
       "div>a[class='watchEpisode']"
