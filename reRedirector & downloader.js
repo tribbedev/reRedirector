@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.5
+// @version      1.4.6
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -55,6 +55,7 @@
 //
 //
 // @require      https://tribbe.dev/userscript/GM_config.js
+// @downloadURL  https://raw.githubusercontent.com/tribbedev/userscripts/main/reRedirector%20%26%20downloader.js
 //
 // @grant        GM_getValue
 // @grant        GM_setValue
