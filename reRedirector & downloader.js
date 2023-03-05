@@ -1,59 +1,14 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.7
+// @version      1.5.0
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
 //
 //
-// @include      *://s.to*
-// @include      *://serien.link*
-// @include      *://serienstream.sx*
-// @include      *://serienstream.to*
-// @include      *://serien.sx*
-// @include      *://serien.me*
-// @include      *://190.115.18.20*
-//
-// @include      *://anicloud.*
-// @include      *://aniworld.*
-//
-// @include      *://streamkiste.*
-//
-//
-// @include      *://*voe*
-// @include      *://*voe-network*
-// @include      *://v-o-e-unblock.com*
-// @include      *://audaciousdefaulthouse.com*
-// @include      *://launchreliantcleaverriver*
-// @include      *://reputationsheriffkennethsand*
-// @include      *://fittingcentermondaysunday*
-// @include      *://housecardsummerbutton*
-// @include      *://fraudclatterflying*
-// @include      *://bigclatterhomesguideservice*
-// @include      *://uptoperformancefinishconferenceroom*
-// @include      *://grandsonreverendlawn*
-// @include      *://glizauvo*
-// @include      *://realfinanceblogcenter*
-// @include      *://tinycat-voe-fashion*
-// @include      *://20demidistance9elongations*
-// @include      *://matriculant401merited*
-//
-// @include      *streamtape.*/get_video?*
-// @include      *streamtape.*/e/*
-// @include      *strcloud.*
-// @include      *tapecontent.*
-// @include      *strtape.*
-// @include      *strtpe.*
-// @include      *stape.*
-// @include      *adblockstrtech.*
-//
-// @include      *vidoza.net*
-//
-// @include      *://streamz.ws*
-// @include      *://streamzz.to*
-//
-// @include      *://evoload*
+// @include http://*/*
+// @include https://*/*
 //
 //
 // @require      https://tribbe.dev/userscript/GM_config.js
@@ -272,13 +227,16 @@ var next_video_url, season_number, episode_number, episode_id, episode_name;
 
 var loaded = false;
 async function main() {
+  configInstanceId = getConfigInstanceId();
+  // check is working site or iframe
+  if (!isIframe() && configInstanceId == -1) return;
+
   console.log("loaded: " + loaded);
   if (loaded) return;
   console.log(document.location.href);
   console.log("getRRId: " + (await getRRId(document.location.href)));
   if (!(await getRRId(document.location.href))) return;
   console.log("");
-  configInstanceId = getConfigInstanceId();
   console.log(
     "reRedirector Loaded (" +
       "rRId:" +
@@ -371,9 +329,9 @@ async function videoHosterSource(videoNode) {
       }
     }
   } else {
-    console.log("Streamtape adurl found.... retry");
-    // todo, do here a relaod from old website
     // streamtape bypass
+    console.log("Streamtape adurl found.... retry");
+    window.top.postMessage("reload", "*");
   }
 }
 
@@ -616,7 +574,14 @@ async function selectFavoriteStream() {
       "div>a[class='watchEpisode']"
     );
     if (streamingUrlNode) {
-      streamingUrlNode.click();
+      if (
+        document.querySelectorAll(
+          "iframe[src='" + streamingUrlNode.getAttribute("href") + "']"
+        ).length == 0
+      ) {
+        debug("Fav stream found...");
+        streamingUrlNode.click();
+      }
     }
   }
 }
@@ -659,25 +624,9 @@ async function getVideoSrc() {
   var retry = false;
   //VOE
   if (
-    document.location.hostname.includes("voe.") ||
-    document.location.hostname.includes("v-o-e-unblock.") ||
-    document.location.hostname.includes("voe-network") ||
-    document.location.hostname.includes("audaciousdefaulthouse.") ||
-    document.location.hostname.includes("launchreliantcleaverriver") ||
-    document.location.hostname.includes("reputationsheriffkennethsand") ||
-    document.location.hostname.includes("fittingcentermondaysunday") ||
-    document.location.hostname.includes("housecardsummerbutton") ||
-    document.location.hostname.includes("fraudclatterflying") ||
-    document.location.hostname.includes("bigclatterhomesguideservice") ||
-    document.location.hostname.includes(
-      "uptoperformancefinishconferenceroom"
-    ) ||
-    document.location.hostname.includes("grandsonreverendlawn") ||
-    document.location.hostname.includes("glizauvo") ||
-    document.location.hostname.includes("realfinanceblogcenter") ||
-    document.location.hostname.includes("tinycat-voe-fashion") ||
-    document.location.hostname.includes("20demidistance9elongations") ||
-    document.location.hostname.includes("matriculant401merited")
+    document.querySelectorAll(
+      "div[class='plyr__video-wrapper']>video[id='voe-player']"
+    ).length > 0
   ) {
     retry = true;
 
@@ -806,6 +755,7 @@ function getConfigInstanceId() {
   if (configInstanceId) return configInstanceId;
   if (isSTO() || isAnicloud()) return 1;
   if (isStreamkiste()) return 2;
+  return -1;
 }
 //#endregion
 
@@ -966,6 +916,9 @@ function postMessageRecieve(evt) {
       break;
     case "finishedVideo":
       finishedVideo();
+      break;
+    case "reload":
+      location.reload();
       break;
   }
 }
