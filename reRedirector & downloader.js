@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.4.6
+// @version      1.4.7
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -36,6 +36,8 @@
 // @include      *://glizauvo*
 // @include      *://realfinanceblogcenter*
 // @include      *://tinycat-voe-fashion*
+// @include      *://20demidistance9elongations*
+// @include      *://matriculant401merited*
 //
 // @include      *streamtape.*/get_video?*
 // @include      *streamtape.*/e/*
@@ -322,14 +324,14 @@ async function main() {
       await notVideoHoster(episode_name);
     }
   }
-  deleteOldGM();
+  //deleteOldGM();
   loaded = true;
 }
 
 //#region Methods
 //#region webbased Methods
 async function videoHosterSource(videoNode) {
-  if (!String(videoNode.source).includes("do_not_delete")) {
+  if (!String(videoNode.src).includes("do_not_delete")) {
     var autoplay =
       !GM_config.get("downloadVideo") &&
       isIframe() &&
@@ -347,7 +349,7 @@ async function videoHosterSource(videoNode) {
       //#region Download
       var link = document.createElement("a");
       link.download = episode_name + ".mp4";
-      link.href = videoNode.source;
+      link.href = videoNode.src;
       link.click();
       await sleep(1000);
       //#endregion
@@ -369,6 +371,7 @@ async function videoHosterSource(videoNode) {
       }
     }
   } else {
+    console.log("Streamtape adurl found.... retry");
     // todo, do here a relaod from old website
     // streamtape bypass
   }
@@ -672,13 +675,15 @@ async function getVideoSrc() {
     document.location.hostname.includes("grandsonreverendlawn") ||
     document.location.hostname.includes("glizauvo") ||
     document.location.hostname.includes("realfinanceblogcenter") ||
-    document.location.hostname.includes("tinycat-voe-fashion")
+    document.location.hostname.includes("tinycat-voe-fashion") ||
+    document.location.hostname.includes("20demidistance9elongations") ||
+    document.location.hostname.includes("matriculant401merited")
   ) {
     retry = true;
 
     var mp4finder = null;
-    mp4finder = content.match(/(https?.*?\.mp4)/);
-    if (mp4finder != null) video = mp4finder[0];
+    mp4finder = content.match(/('https?.*?\.mp4.*?')/g);
+    if (mp4finder != null) video = mp4finder[0].replaceAll("'", "");
 
     if (video == null) {
       mp4finder = content.match(/sources\[\"mp4\"\] = .*?\(\[(.*?)]\);/);
