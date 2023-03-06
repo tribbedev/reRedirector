@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.0
+// @version      1.5.1
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -804,13 +804,14 @@ async function deleteAllGM(session = false, _rRId = null) {
 }
 
 async function checkrRId(_rRId) {
-  if (_rRId)
-    if (Date.now() - _rRId >= 3600000) {
+  if (_rRId) {
+    if (Date.now() - _rRId >= 3600000 || rRId == "null") {
       debug("delete rRId: " + _rRId);
       await deleteAllGM(true, _rRId);
       sessionStorage.removeItem("republic_sess");
       rRId = null;
     }
+  }
 }
 //#endregion
 
@@ -836,13 +837,14 @@ async function getRRId(_url) {
           }
         }
       }
-      if (rRId == null) {
+      if (rRId == null || rRId == "null") {
         rRId = Date.now();
         rRId_Value = _url;
 
         await setGM("sess", rRId_Value);
         sessionStorage.setItem("republic_sess", rRId);
       }
+      debug("debug: " + typeof rRId);
     } else {
       var count = 0;
       while (count < 4) {
