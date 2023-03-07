@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.1
+// @version      1.5.2
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -399,7 +399,9 @@ async function getEpisodeDetails() {
           ? parseInt(languageNode[0].getAttribute("data-lang-key"))
           : 0; // 3 = Japanese, 2 = English, 1 = Deutsch
       var episodeTitleNode =
-        languageNr == 1 ? episodeGermanTitleNode : episodeEnglishTitleNode;
+        languageNr == 1 && episodeGermanTitleNode.length > 0
+          ? episodeGermanTitleNode
+          : episodeEnglishTitleNode;
       var episodeNode = document.querySelectorAll(
         "div[class*='hosterSiteDirectNav']>ul>li>a[class*='active'][data-season-id]"
       );
