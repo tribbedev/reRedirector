@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.2
+// @version      1.5.3
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -736,7 +736,7 @@ function setEpisodeAsWatched() {
 function isSTO() {
   return (
     document.location.hostname.includes("serien.") ||
-    document.location.hostname.includes("s.") ||
+    document.location.hostname.includes("s.to") ||
     document.location.hostname.includes("serienstream.") ||
     document.location.hostname.includes("190.115.18.20")
   );
