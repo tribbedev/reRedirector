@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.3
+// @version      1.5.4
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -9,6 +9,7 @@
 //
 // @include http://*/*
 // @include https://*/*
+// @exclude *captcha*
 //
 //
 // @require      https://tribbe.dev/userscript/GM_config.js
@@ -233,9 +234,8 @@ async function main() {
 
   console.log("loaded: " + loaded);
   if (loaded) return;
-  console.log(document.location.href);
   console.log("getRRId: " + (await getRRId(document.location.href)));
-  if (!(await getRRId(document.location.href))) return;
+  if (rRId == null) return;
   console.log("");
   console.log(
     "reRedirector Loaded (" +
@@ -818,7 +818,8 @@ async function checkrRId(_rRId) {
 //#endregion
 
 //#region general Methods
-async function getRRId(_url) {
+async function getRRId(_url, currentcount = 0) {
+  if (currentcount >= 5) return null;
   if (rRId == null) {
     if (!isIframe()) {
       //check sessionstorage
@@ -856,7 +857,7 @@ async function getRRId(_url) {
       }
     }
   }
-  rRId = rRId != null ? rRId : getRRId(_url);
+  rRId = rRId != null ? rRId : getRRId(_url, currentcount + 1);
   return rRId;
 }
 
