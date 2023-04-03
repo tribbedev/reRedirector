@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.4
+// @version      1.5.5
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -160,7 +160,14 @@ function GMConfig_data() {
           defaultStreamingProvider: {
             lanel: "Select your favorite streaming provider",
             type: "select",
-            options: ["VOE", "Streamtape", "Vidoza", "StreamZ"],
+            options: [
+              "VOE",
+              "Streamtape",
+              "Vidoza",
+              "StreamZ",
+              "Evoload",
+              "Doodstream",
+            ],
             default: "VOE",
           },
         },
@@ -564,6 +571,10 @@ async function selectFavoriteStream() {
             ? "Vidoza"
             : favStreamingProvider == "Vidoza"
             ? "StreamZ"
+            : favStreamingProvider == "StreamZ"
+            ? "Evoload"
+            : favStreamingProvider == "Evoload"
+            ? "Doodstream"
             : "VOE";
       }
     } else {
@@ -624,7 +635,7 @@ async function getVideoSrc() {
   var videoNode = null;
 
   var retry = false;
-  //VOE
+  //#region VOE
   if (
     document.querySelectorAll(
       "div[class='plyr__video-wrapper']>video[id='voe-player']"
@@ -645,8 +656,9 @@ async function getVideoSrc() {
       }
     }
   }
+  //#endregion
 
-  //Streamtape
+  //#region Streamtape
   if (
     document.location.hostname.includes("streamtape.") ||
     document.location.hostname.includes("str.") ||
@@ -669,20 +681,22 @@ async function getVideoSrc() {
       }
     }
   }
+  //#endregion
 
-  //Vidoza
+  //#region Vidoza
   if (document.location.hostname.includes("vidoza.net")) {
     retry = true;
 
     videoNode = document.querySelectorAll(
-      "video[id*='player_html5_api'][class*='vjs-tech']>source[type*='video/mp4'][src]"
+      "video[id*='html5_api'][class*='vjs-tech']>source[type*='video/mp4'][src]"
     );
     if (videoNode.length > 0) {
       video = videoNode[0].getAttribute("src");
     }
   }
+  //#endregion
 
-  //StreamZ
+  //#region StreamZ
   if (
     document.location.hostname.includes("streamz.ws") ||
     document.location.hostname.includes("streamzz.to")
@@ -694,8 +708,9 @@ async function getVideoSrc() {
       video = videoNode[0].getAttribute("src");
     }
   }
+  //#endregion
 
-  //Evoload
+  //#region Evoload
   if (document.location.hostname.includes("evoload.")) {
     retry = true;
 
@@ -704,6 +719,22 @@ async function getVideoSrc() {
       video = videoNode[0].getAttribute("src");
     }
   }
+  //#endregion
+
+  //#region Doodstream
+  if (document.location.hostname.includes("dood.yt")) {
+    retry = true;
+
+    videoNode = document.querySelectorAll(
+      "video[id*='html5_api'][class*='vjs-tech'][src]"
+    );
+    if (videoNode.length > 0) {
+      video = videoNode[0].getAttribute("src");
+    }
+  }
+  //#endregion
+
+  //repeat if isnt found
   if (video == null && retry) {
     await sleep(500);
     return await getVideoSrc();
