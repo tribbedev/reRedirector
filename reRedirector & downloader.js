@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.5
+// @version      1.5.7
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -655,6 +655,13 @@ async function getVideoSrc() {
         video = atob(p01);
       }
     }
+
+    if (video == null) {
+      mp4finder = content.match(/'mp4': '(.*?)',/);
+      if (mp4finder != null && mp4finder.length == 2) {
+        video = atob(mp4finder[1].replaceAll("'", ""));
+      }
+    }
   }
   //#endregion
 
@@ -930,6 +937,9 @@ function postMessageRecieve(evt) {
   var header,
     data = null,
     other = null;
+  if (!(typeof evt.data === 'string' || evt.data instanceof String)) {
+      return;
+  }
   const dataArray = evt.data.split("|");
   if (dataArray.length >= 2) {
     header = dataArray[0];
