@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.5.7
+// @version      1.6.0
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -20,6 +20,7 @@
 // @grant        GM_deleteValue
 // @grant        GM_listValues
 // @grant        GM_addStyle
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 var devMode = true;
@@ -151,14 +152,14 @@ function GMConfig_data() {
             default: true,
           },
           defaultLanguage: {
-            lanel:
+            label:
               "Select your favorite language for streams | order= selection -> ger -> ger sub -> eng",
             type: "select",
             options: ["German", "German Sub", "English"],
             default: "German",
           },
           defaultStreamingProvider: {
-            lanel: "Select your favorite streaming provider",
+            label: "Select your favorite streaming provider",
             type: "select",
             options: [
               "VOE",
@@ -169,6 +170,43 @@ function GMConfig_data() {
               "Doodstream",
             ],
             default: "VOE",
+          },
+          useJdownloader: {
+            label: "Use Jdownloader via CNL2 (needs to be started)",
+            type: "checkbox",
+            default: false,
+          },
+          jdownloaderEmail: {
+            label: "jDownloader Email",
+            type: "text",
+            default:
+              "@gmail.com",
+            title:
+              "Your MyJDownloader email adress",
+          },
+          jdownloaderPassword: {
+            label: "jDownloader Password",
+            type: "text",
+            default:
+              "*****",
+            title:
+              "Your MyJDownloader password",
+          },
+          jdownloaderDeviceName: {
+            label: "jDownloader Device Name",
+            type: "text",
+            default:
+              "RandomPC",
+            title:
+              "Your MyJDownloader Device Name",
+          },
+          jdownloaderFolder: {
+            label: "jDownloader Folder path",
+            type: "text",
+            default:
+              "none",
+            title:
+              "Your MyJDownloader Destination Folder",
           },
         },
       };
@@ -273,7 +311,7 @@ async function main() {
     var video_src = await getVideoSrc();
     if (video_src) {
       console.log("video_src: " + video_src);
-      window.location.href = video_src;
+      await downloadVideo(video_src);
     } else if (!isIframe()) {
       //#region ConfigButton
       var gmConfigButton = document.createElement("img");
@@ -307,17 +345,7 @@ async function videoHosterSource(videoNode) {
     } else videoNode.parentNode.autoplay = false;
 
     if (GM_config.get("downloadVideo")) {
-      var episode_name = null;
-      if (!GM_config.get("disableNameing"))
-        episode_name = await getGM("episode_name");
-      if (episode_name == null) episode_name = Date.now();
-      //#region Download
-      var link = document.createElement("a");
-      link.download = episode_name + ".mp4";
-      link.href = videoNode.src;
-      link.click();
-      await sleep(1000);
-      //#endregion
+      await downloadVideo(videoNode.src);
     }
 
     await deleteAllGM(true);
@@ -341,6 +369,50 @@ async function videoHosterSource(videoNode) {
     window.top.postMessage("reload", "*");
   }
 }
+
+//#region Download
+async function downloadVideo(videosrc)
+{      
+  var episode_name = null;
+  if (!GM_config.get("disableNameing"))
+    episode_name = await getGM("episode_name");
+  if (episode_name == null) episode_name = Date.now();
+
+  jdownloader = false
+  if(GM_config.get("useJdownloader")) {
+    $dest_folder = GM_config.get("jdownloaderFolder") == "none" ? null: GM_config.get("jdownloaderFolder")
+    try {
+      GM_xmlhttpRequest({
+        method: "POST",
+        url: "https://api.tribbe.dev/jdownloader/add", //url: "https://api.jdownloader.org/flash/add",
+        data: JSON.stringify({
+          jd_email: GM_config.get("jdownloaderEmail"),
+          jd_password: GM_config.get("jdownloaderPassword"),
+          jd_devicename: GM_config.get("jdownloaderDeviceName"),
+          link: videosrc,
+          packagename: episode_name,
+          destinationfolder: $dest_folder,
+          pass: "EmuP4a^Bn6L/fF"
+        }),
+        headers: {"Content-type": "application/json; charset=UTF-8"},
+        onload: function(response) {
+          console.log(response);
+        }
+      })
+      jdownloader = true
+    } catch {
+      console.error('Jdownloader is Offline or an error is there');
+    }
+  }
+  if(!jdownloader) {
+    var link = document.createElement("a");
+    link.download = episode_name + ".mp4";
+    link.href = videosrc;
+    link.click();
+  }
+  await sleep(1000);
+}
+//#endregion
 
 async function notVideoHoster() {
   //#region SkipButton
@@ -657,9 +729,28 @@ async function getVideoSrc() {
     }
 
     if (video == null) {
-      mp4finder = content.match(/'mp4': '(.*?)',/);
+      mp4finder = content.match(/'mp4': '(.*?)'/);
       if (mp4finder != null && mp4finder.length == 2) {
         video = atob(mp4finder[1].replaceAll("'", ""));
+      }
+    }
+
+    if(GM_config.get("useJdownloader")) {
+      var hlsfinder = null;
+      if (video == null) {
+        hlsfinder = content.match(/sources\[\"hls\"\] = .*?\(\[(.*?)]\);/);
+        if (hlsfinder != null && hlsfinder.length == 2) {
+          var hlsarray = hlsfinder[1].replaceAll("'", "").split(",");
+          var p01 = hlsarray.join("").split("").reverse().join("");
+          video = atob(p01);
+        }
+      }
+
+      if (video == null) {
+        hlsfinder = content.match(/'hls': '(.*?)'/);
+        if (hlsfinder != null && hlsfinder.length == 2) {
+          video = atob(hlsfinder[1].replaceAll("'", ""));
+        }
       }
     }
   }
@@ -691,7 +782,9 @@ async function getVideoSrc() {
   //#endregion
 
   //#region Vidoza
-  if (document.location.hostname.includes("vidoza.net")) {
+  if (document.location.hostname.includes("vidoza.") ||
+  document.location.hostname.includes("videzz.")
+  ) {
     retry = true;
 
     videoNode = document.querySelectorAll(
