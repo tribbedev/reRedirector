@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.6.0
+// @version      1.6.1
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -347,22 +347,6 @@ async function videoHosterSource(videoNode) {
     if (GM_config.get("downloadVideo")) {
       await downloadVideo(videoNode.src);
     }
-
-    await deleteAllGM(true);
-
-    if (
-      (GM_config.get("autoRedirectNextPage") ||
-        GM_config.get("setEpisodeAsWatched")) &&
-      isIframe()
-    ) {
-      if (GM_config.get("downloadVideo"))
-        window.top.postMessage("finishedVideo", "*");
-      else {
-        videoNode.parentNode.addEventListener("ended", async function () {
-          window.top.postMessage("finishedVideo", "*");
-        });
-      }
-    }
   } else {
     // streamtape bypass
     console.log("Streamtape adurl found.... retry");
@@ -411,6 +395,21 @@ async function downloadVideo(videosrc)
     link.click();
   }
   await sleep(1000);
+  await deleteAllGM(true);
+
+  if (
+    (GM_config.get("autoRedirectNextPage") ||
+      GM_config.get("setEpisodeAsWatched")) &&
+    isIframe()
+  ) {
+    if (GM_config.get("downloadVideo"))
+      window.top.postMessage("finishedVideo", "*");
+    else {
+      videoNode.parentNode.addEventListener("ended", async function () {
+        window.top.postMessage("finishedVideo", "*");
+      });
+    }
+  }
 }
 //#endregion
 
