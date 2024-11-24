@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.6.1
+// @version      1.6.2
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -284,11 +284,11 @@ async function main() {
   console.log("");
   console.log(
     "reRedirector Loaded (" +
-      "rRId:" +
-      rRId +
-      " | configInstance:" +
-      configInstanceId +
-      ")"
+    "rRId:" +
+    rRId +
+    " | configInstance:" +
+    configInstanceId +
+    ")"
   );
   console.log("host: " + document.location.hostname);
   var checkIsVideoNode = await waitForFound(
@@ -355,47 +355,47 @@ async function videoHosterSource(videoNode) {
 }
 
 //#region Download
-async function downloadVideo(videosrc)
-{      
+async function downloadVideo(videosrc) {
   var episode_name = null;
   if (!GM_config.get("disableNameing"))
     episode_name = await getGM("episode_name");
   if (episode_name == null) episode_name = Date.now();
 
   jdownloader = false
-  if(GM_config.get("useJdownloader")) {
-    $dest_folder = GM_config.get("jdownloaderFolder") == "none" ? null: GM_config.get("jdownloaderFolder")
-    try {
-      GM_xmlhttpRequest({
-        method: "POST",
-        url: "https://api.tribbe.dev/jdownloader/add", //url: "https://api.jdownloader.org/flash/add",
-        data: JSON.stringify({
-          jd_email: GM_config.get("jdownloaderEmail"),
-          jd_password: GM_config.get("jdownloaderPassword"),
-          jd_devicename: GM_config.get("jdownloaderDeviceName"),
-          link: videosrc,
-          packagename: episode_name,
-          destinationfolder: $dest_folder,
-          pass: "EmuP4a^Bn6L/fF"
-        }),
-        headers: {"Content-type": "application/json; charset=UTF-8"},
-        onload: function(response) {
-          console.log(response);
-        }
-      })
-      jdownloader = true
-    } catch {
-      console.error('Jdownloader is Offline or an error is there');
+  if (GM_config.get("downloadVideo")) {
+    if (GM_config.get("useJdownloader")) {
+      $dest_folder = GM_config.get("jdownloaderFolder") == "none" ? null : GM_config.get("jdownloaderFolder")
+      try {
+        GM_xmlhttpRequest({
+          method: "POST",
+          url: "https://api.tribbe.dev/jdownloader/add", //url: "https://api.jdownloader.org/flash/add",
+          data: JSON.stringify({
+            jd_email: GM_config.get("jdownloaderEmail"),
+            jd_password: GM_config.get("jdownloaderPassword"),
+            jd_devicename: GM_config.get("jdownloaderDeviceName"),
+            link: videosrc,
+            packagename: episode_name,
+            destinationfolder: $dest_folder,
+            pass: "EmuP4a^Bn6L/fF"
+          }),
+          headers: { "Content-type": "application/json; charset=UTF-8" },
+          onload: function (response) {
+            console.log(response);
+          }
+        })
+        jdownloader = true
+      } catch {
+        console.error('Jdownloader is Offline or an error is there');
+      }
+    }
+    if (!jdownloader) {
+      var link = document.createElement("a");
+      link.download = episode_name + ".mp4";
+      link.href = videosrc;
+      link.click();
     }
   }
-  if(!jdownloader) {
-    var link = document.createElement("a");
-    link.download = episode_name + ".mp4";
-    link.href = videosrc;
-    link.click();
-  }
   await sleep(1000);
-  await deleteAllGM(true);
 
   if (
     (GM_config.get("autoRedirectNextPage") ||
@@ -404,12 +404,13 @@ async function downloadVideo(videosrc)
   ) {
     if (GM_config.get("downloadVideo"))
       window.top.postMessage("finishedVideo", "*");
-    else {
+    else if (videoNode === undefined) {
       videoNode.parentNode.addEventListener("ended", async function () {
         window.top.postMessage("finishedVideo", "*");
       });
     }
   }
+  await deleteAllGM(true);
 }
 //#endregion
 
@@ -499,10 +500,10 @@ async function getEpisodeDetails() {
           languageNr == 1
             ? "German"
             : languageNr == 2
-            ? "English"
-            : languageNr == 3
-            ? "Japanese"
-            : "";
+              ? "English"
+              : languageNr == 3
+                ? "Japanese"
+                : "";
 
         episode_number = parseInt(episodeNode[0].textContent);
 
@@ -613,10 +614,10 @@ async function selectFavoriteStream() {
     favLangNr == "German"
       ? 1
       : favLangNr == "English"
-      ? 2
-      : favLangNr == "German Sub"
-      ? 3
-      : 0;
+        ? 2
+        : favLangNr == "German Sub"
+          ? 3
+          : 0;
   var favStreamingProvider = GM_config.get("defaultStreamingProvider");
 
   var streamingUrlNode = null;
@@ -639,14 +640,14 @@ async function selectFavoriteStream() {
           favStreamingProvider == "VOE"
             ? "Streamtape"
             : favStreamingProvider == "Streamtape"
-            ? "Vidoza"
-            : favStreamingProvider == "Vidoza"
-            ? "StreamZ"
-            : favStreamingProvider == "StreamZ"
-            ? "Evoload"
-            : favStreamingProvider == "Evoload"
-            ? "Doodstream"
-            : "VOE";
+              ? "Vidoza"
+              : favStreamingProvider == "Vidoza"
+                ? "StreamZ"
+                : favStreamingProvider == "StreamZ"
+                  ? "Evoload"
+                  : favStreamingProvider == "Evoload"
+                    ? "Doodstream"
+                    : "VOE";
       }
     } else {
       favLangNr = favLangNr == 1 ? 3 : favLangNr == 3 ? 2 : 1;
@@ -734,7 +735,7 @@ async function getVideoSrc() {
       }
     }
 
-    if(GM_config.get("useJdownloader")) {
+    if (GM_config.get("useJdownloader")) {
       var hlsfinder = null;
       if (video == null) {
         hlsfinder = content.match(/sources\[\"hls\"\] = .*?\(\[(.*?)]\);/);
@@ -782,7 +783,7 @@ async function getVideoSrc() {
 
   //#region Vidoza
   if (document.location.hostname.includes("vidoza.") ||
-  document.location.hostname.includes("videzz.")
+    document.location.hostname.includes("videzz.")
   ) {
     retry = true;
 
@@ -821,11 +822,24 @@ async function getVideoSrc() {
   //#endregion
 
   //#region Doodstream
-  if (document.location.hostname.includes("dood.yt")) {
+  if (document.location.hostname.includes("dood.")) {
     retry = true;
 
     videoNode = document.querySelectorAll(
       "video[id*='html5_api'][class*='vjs-tech'][src]"
+    );
+    if (videoNode.length > 0) {
+      video = videoNode[0].getAttribute("src");
+    }
+  }
+  //#endregion
+
+  //#region Speedfiles
+  if (document.location.hostname.includes("speedfiles.")) {
+    retry = true;
+
+    videoNode = document.querySelectorAll(
+      "video[id*='my-video_html5_api'][class*='vjs-tech'][src]"
     );
     if (videoNode.length > 0) {
       video = videoNode[0].getAttribute("src");
@@ -1030,7 +1044,7 @@ function postMessageRecieve(evt) {
     data = null,
     other = null;
   if (!(typeof evt.data === 'string' || evt.data instanceof String)) {
-      return;
+    return;
   }
   const dataArray = evt.data.split("|");
   if (dataArray.length >= 2) {
