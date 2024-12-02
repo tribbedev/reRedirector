@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         reRedirector & downloader
 // @namespace    https://tribbe.de
-// @version      1.6.2
+// @version      1.6.3
 // @description  Redirect streaming links directly to source
 // @author       Tribbe (rePublic Studios)
 // @license      MIT
@@ -168,6 +168,7 @@ function GMConfig_data() {
               "StreamZ",
               "Evoload",
               "Doodstream",
+              "SpeedFiles",
             ],
             default: "VOE",
           },
@@ -647,7 +648,9 @@ async function selectFavoriteStream() {
                   ? "Evoload"
                   : favStreamingProvider == "Evoload"
                     ? "Doodstream"
-                    : "VOE";
+                    : favStreamingProvider == "Doodstream"
+                      ? "SpeedFiles"
+                      : "VOE";
       }
     } else {
       favLangNr = favLangNr == 1 ? 3 : favLangNr == 3 ? 2 : 1;
